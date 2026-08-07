@@ -1,5 +1,9 @@
 package com.wander.services;
 
+import com.wander.dto.CreateReservationRequest;
+import com.wander.dto.ReservationResponse;
+import com.wander.dto.UpdateReservationRequest;
+import com.wander.mapper.ReservationMapper;
 import com.wander.models.ReservationEntity;
 import com.wander.repo.ReservationRepo;
 import lombok.AllArgsConstructor;
@@ -16,35 +20,39 @@ import java.util.NoSuchElementException;
 public class ReservationService {
 
     private ReservationRepo reservationRepo;
+    private ReservationMapper reservationMapper;
 
-    public ReservationEntity getReservationById(Long id) {
+    public ReservationResponse getReservationById(Long id) {
+        return reservationRepo.findById(id)
+                .map(reservationMapper::toResponse)
+                .orElseThrow(() -> new NoSuchElementException("Reservation not found"));
+    }
+
+    public List<ReservationResponse> findAllReservation() {
+        return reservationRepo.findAll()
+                .stream()
+                .map(reservationMapper::toResponse)
+                .toList();
+    }
+
+    public ReservationResponse saveReservation(CreateReservationRequest request) {
+        ReservationEntity entityToSave = reservationMapper.toEntity(request);
+        ReservationEntity saveEntity = reservationRepo.save(entityToSave);
+        return reservationMapper.toResponse(saveEntity);
+    }
+
+    public void deleteReservation(Long id) {
         if (!reservationRepo.existsById(id)) {
-            throw new NoSuchElementException("No such element: " + id);
+            throw new NoSuchElementException("Reservation not found");
         }
-        return reservationRepo.findById(id).
-                orElseThrow(() -> new NoSuchElementException("No such element: " + id));
+        reservationRepo.deleteById(id);
     }
 
-    public List<ReservationEntity> findAllReservation() {
-        return reservationRepo.findAll();
-    }
-
-    public ResponseEntity<ReservationEntity> saveReservation(ReservationEntity reservationBody) {
-        ReservationEntity reservationEntity = reservationRepo.save(reservationBody);
-
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(reservationEntity);
-    }
-
-    public ResponseEntity<ReservationEntity> deleteReservation(Long id) {
-        ReservationEntity reservationEntity = reservationRepo.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("No such element: " + id));
-
-        reservationRepo.delete(reservationEntity);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-    }
-
-    public ResponseEntity<ReservationEntity> updateReservation(Long id, ReservationEntity reservationBody) {
-        return  ResponseEntity.notFound().build();
+    public ReservationResponse updateReservation(Long id, UpdateReservationRequest request) {
+        ReservationEntity existingEntity = reservationRepo.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Reservation not found"));
+        reservationMapper.updateEntityFromDto(request, existingEntity);
+        reservationRepo.save(existingEntity);
+        return reservationMapper.toResponse(existingEntity);
     }
 }

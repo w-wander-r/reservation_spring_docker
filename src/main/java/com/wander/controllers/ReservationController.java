@@ -1,10 +1,12 @@
 package com.wander.controllers;
 
-import com.wander.models.ReservationEntity;
+import com.wander.dto.CreateReservationRequest;
+import com.wander.dto.ReservationResponse;
+import com.wander.dto.UpdateReservationRequest;
 import com.wander.services.ReservationService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.hibernate.annotations.Audited;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,32 +23,34 @@ public class ReservationController {
     private ReservationService reservationService;
 
     @GetMapping("/{id}")
-    public ReservationEntity getReservationById(@PathVariable("id") Long id) {
+    public ResponseEntity<ReservationResponse> getReservationById(@PathVariable Long id) {
         log.info("getReservationById called");
-        return reservationService.getReservationById(id);
+        return ResponseEntity.ok(reservationService.getReservationById(id));
     }
 
-    @GetMapping("/all")
-    public List<ReservationEntity> getAllReservation() {
+    @GetMapping
+    public ResponseEntity<List<ReservationResponse>> getAllReservation() {
         log.info("getAllReservation called");
-        return reservationService.findAllReservation();
+        return ResponseEntity.ok(reservationService.findAllReservation());
     }
 
-    @PostMapping("/save")
-    public ResponseEntity<ReservationEntity> createReservation(@RequestBody ReservationEntity reservationBody) {
+    @PostMapping
+    public ResponseEntity<ReservationResponse> createReservation(@Valid @RequestBody CreateReservationRequest  request) {
         log.info("createReservation called");
-        return reservationService.saveReservation(reservationBody);
+        ReservationResponse response = reservationService.saveReservation(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<ReservationEntity> updateReservation(@PathVariable("id") Long id, @RequestBody ReservationEntity reservation) {
+    @PutMapping("/{id}")
+    public ResponseEntity<ReservationResponse> updateReservation(@PathVariable Long id, @RequestBody UpdateReservationRequest request) {
         log.info("updateReservation called");
-        return reservationService.updateReservation(id, reservation);
+        return ResponseEntity.ok(reservationService.updateReservation(id,request));
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<ReservationEntity> deleteReservation(@PathVariable("id") Long id) {
+    public ResponseEntity<ReservationResponse> deleteReservation(@PathVariable Long id) {
         log.info("deleteReservation called");
-        return reservationService.deleteReservation(id);
+        reservationService.deleteReservation(id);
+        return ResponseEntity.noContent().build();
     }
 }
