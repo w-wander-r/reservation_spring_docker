@@ -7,6 +7,7 @@ import com.wander.mapper.ReservationMapper;
 import com.wander.models.ReservationEntity;
 import com.wander.repo.ReservationRepo;
 import lombok.AllArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +37,9 @@ public class ReservationService {
     }
 
     public ReservationResponse saveReservation(CreateReservationRequest request) {
+        if (!request.endDate().isAfter(request.startDate())) {
+            throw new IllegalArgumentException("End date should be after start date");
+        }
         ReservationEntity entityToSave = reservationMapper.toEntity(request);
         ReservationEntity saveEntity = reservationRepo.save(entityToSave);
         return reservationMapper.toResponse(saveEntity);
