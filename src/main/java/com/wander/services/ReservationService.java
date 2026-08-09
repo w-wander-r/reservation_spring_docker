@@ -9,6 +9,10 @@ import com.wander.models.ReservationEntity;
 import com.wander.repo.ReservationRepo;
 import com.wander.validation.ReservationConflictException;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,11 +31,14 @@ public class ReservationService {
                 .orElseThrow(() -> new NoSuchElementException("Reservation not found"));
     }
 
-    public List<ReservationResponse> findAllReservation() {
-        return reservationRepo.findAll()
-                .stream()
-                .map(reservationMapper::toResponse)
-                .toList();
+    public Page<ReservationResponse> findAllReservation(int page, int size, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return reservationRepo.findAll(pageable)
+                .map(reservationMapper::toResponse);
     }
 
     public ReservationResponse saveReservation(CreateReservationRequest request) {

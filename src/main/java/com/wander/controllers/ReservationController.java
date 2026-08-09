@@ -6,6 +6,7 @@ import com.wander.dto.UpdateReservationRequest;
 import com.wander.services.ReservationService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,9 +30,15 @@ public class ReservationController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ReservationResponse>> getAllReservation() {
-        log.info("getAllReservation called");
-        return ResponseEntity.ok(reservationService.findAllReservation());
+    public ResponseEntity<Page<ReservationResponse>> getAllReservation(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir
+    ) {
+        log.info("getAllReservation called with page=" + page + ", size=" + size);
+        Page<ReservationResponse> reservations = reservationService.findAllReservation(page, size, sortBy, sortDir);
+        return ResponseEntity.ok(reservations);
     }
 
     @PostMapping
