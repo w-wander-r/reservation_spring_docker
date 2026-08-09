@@ -1,16 +1,14 @@
 package com.wander.services;
 
+import com.wander.ReservationStatus;
 import com.wander.dto.CreateReservationRequest;
 import com.wander.dto.ReservationResponse;
 import com.wander.dto.UpdateReservationRequest;
 import com.wander.mapper.ReservationMapper;
 import com.wander.models.ReservationEntity;
 import com.wander.repo.ReservationRepo;
+import com.wander.validation.ReservationConflictException;
 import lombok.AllArgsConstructor;
-import org.apache.coyote.BadRequestException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -40,6 +38,15 @@ public class ReservationService {
         if (!request.endDate().isAfter(request.startDate())) {
             throw new IllegalArgumentException("End date should be after start date");
         }
+        boolean isConflict = reservationRepo.existsOverlappingReservation(
+                request.roomId(),
+                request.startDate(),
+                request.endDate(),
+                ReservationStatus.CANCELLED
+        );
+        if (isConflict) {
+            throw new ReservationConflictException("Reservation already exists");
+        }
         ReservationEntity entityToSave = reservationMapper.toEntity(request);
         ReservationEntity saveEntity = reservationRepo.save(entityToSave);
         return reservationMapper.toResponse(saveEntity);
@@ -55,6 +62,23 @@ public class ReservationService {
     public ReservationResponse updateReservation(Long id, UpdateReservationRequest request) {
         ReservationEntity existingEntity = reservationRepo.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Reservation not found"));
+
+        if (!request.endDate().isAfter(request.startDate())) {
+            throw new IllegalArgumentException("End date should be after start date");
+        }
+
+        boolean isConflict = reservationRepo.existsOverlappingReservationExcludingSelf(
+                request.roomId(),
+                id,
+                request.startDate(),
+                request.endDate(),
+                ReservationStatus.CANCELLED
+        );
+
+        if (isConflict) {
+            throw new ReservationConflictException("Reservation already exists");
+        }
+
         reservationMapper.updateEntityFromDto(request, existingEntity);
         reservationRepo.save(existingEntity);
         return reservationMapper.toResponse(existingEntity);
