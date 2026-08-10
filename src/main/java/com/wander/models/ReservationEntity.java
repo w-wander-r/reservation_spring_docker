@@ -24,4 +24,7 @@ public class ReservationEntity {
     private LocalDate startDate;
     private LocalDate endDate;
     ReservationStatus status;
+
+    @Version
+    private Integer version;
 }

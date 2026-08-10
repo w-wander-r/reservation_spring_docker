@@ -20,5 +20,6 @@ public interface ReservationMapper {
     ReservationResponse toResponse(ReservationEntity reservationEntity);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "version", ignore = true)
     void updateEntityFromDto(UpdateReservationRequest request, @MappingTarget ReservationEntity entity);
 }
