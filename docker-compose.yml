@@ -16,19 +16,35 @@ services:
       timeout: 5s
       retries: 5
 
-  app:
-    build: .
+  redis:
+    image: redis:7-alpine
+    container_name: reservation-cache
     ports:
-      - "8080:8080"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/reservation_db
-      SPRING_DATASOURCE_USERNAME: wander
-      SPRING_DATASOURCE_PASSWORD: wander
-      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
-      SERVER_PORT: "8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+#  app:
+#    build: .
+#    ports:
+#      - "8080:8080"
+#    environment:
+#      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/reservation_db
+#      SPRING_DATASOURCE_USERNAME: wander
+#      SPRING_DATASOURCE_PASSWORD: wander
+#      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+#      SPRING_DATA_REDIS_HOST: redis
+#      SPRING_DATA_REDIS_PORT: "6379"
+#      SPRING_CACHE_TYPE: redis
+#      SERVER_PORT: "8080"
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      redis:
+#        condition: service_healthy
 
 volumes:
   postgres_data:

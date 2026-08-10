@@ -1,6 +1,7 @@
 package com.wander.services;
 
 import com.wander.ReservationStatus;
+import com.wander.controllers.ReservationController;
 import com.wander.dto.CreateReservationRequest;
 import com.wander.dto.ReservationResponse;
 import com.wander.dto.UpdateReservationRequest;
@@ -9,7 +10,8 @@ import com.wander.models.ReservationEntity;
 import com.wander.repo.ReservationRepo;
 import com.wander.validation.ReservationConflictException;
 import lombok.AllArgsConstructor;
-import org.hibernate.dialect.lock.OptimisticEntityLockException;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,8 +22,9 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Service
 @AllArgsConstructor
@@ -29,15 +32,18 @@ public class ReservationService {
 
     private ReservationRepo reservationRepo;
     private ReservationMapper reservationMapper;
+    private static final Logger log = Logger.getLogger(ReservationService.class.getName());
 
-    @Transactional
+    @Cacheable(value = "reservations", key = "#id")
+    @Transactional(readOnly = true)
     public ReservationResponse getReservationById(Long id) {
+        log.log(Level.INFO, "fetched " + id + " from postgres");
         return reservationRepo.findById(id)
                 .map(reservationMapper::toResponse)
                 .orElseThrow(() -> new NoSuchElementException("Reservation not found"));
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Page<ReservationResponse> findAllReservation(int page, int size, String sortBy, String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
                 ? Sort.by(sortBy).ascending()
@@ -67,6 +73,7 @@ public class ReservationService {
         return reservationMapper.toResponse(saveEntity);
     }
 
+    @CacheEvict(value = "reservations", key = "#id")
     @Transactional
     public void deleteReservation(Long id) {
         if (!reservationRepo.existsById(id)) {
@@ -80,6 +87,7 @@ public class ReservationService {
             maxAttempts = 3,
             backoff = @Backoff(delay = 100, multiplier = 2)
     )
+    @CacheEvict(value = "reservations", key = "#id")
     @Transactional
     public ReservationResponse updateReservation(Long id, UpdateReservationRequest request) {
         ReservationEntity existingEntity = reservationRepo.findById(id)
