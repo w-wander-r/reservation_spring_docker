@@ -1,5 +1,6 @@
 package com.wander.controllers;
 
+import com.wander.ReservationStatus;
 import com.wander.dto.CreateReservationRequest;
 import com.wander.dto.ReservationResponse;
 import com.wander.dto.UpdateReservationRequest;
@@ -11,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -39,6 +41,27 @@ public class ReservationController {
         log.info("getAllReservation called with page=" + page + ", size=" + size);
         Page<ReservationResponse> reservations = reservationService.findAllReservation(page, size, sortBy, sortDir);
         return ResponseEntity.ok(reservations);
+    }
+
+    @GetMapping("/date")
+    public ResponseEntity<List<ReservationResponse>> getAllReservationByDate(
+            @RequestParam String startDate,
+            @RequestParam String endDate
+    ) {
+        log.info("getAllReservationByDate called");
+        List<ReservationResponse> response = reservationService.findReservationByDateRange(startDate, endDate);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/active")
+    public ResponseEntity<List<ReservationResponse>> getAllReservationByActive(
+            @RequestParam Long userId,
+            @RequestParam LocalDate today,
+            @RequestParam ReservationStatus status
+            ) {
+        log.info("getAllReservationByActive called");
+        List<ReservationResponse> response = reservationService.findActiveReservation(userId, today, status);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping

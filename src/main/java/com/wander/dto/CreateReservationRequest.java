@@ -1,5 +1,6 @@
 package com.wander.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.wander.ReservationStatus;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Min;
@@ -20,9 +21,11 @@ public record CreateReservationRequest(
 
         @Future(message = "Start date must be in future")
         @NotNull(message = "Start date should not be null")
+        @JsonFormat(pattern = "yyyy-MM-dd")
         LocalDate startDate,
 
         @NotNull(message = "End date should not be null")
+        @JsonFormat(pattern = "yyyy-MM-dd")
         LocalDate endDate,
 
         @NotNull(message = "Status should not be null")

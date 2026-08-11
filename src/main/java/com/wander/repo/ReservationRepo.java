@@ -1,7 +1,10 @@
 package com.wander.repo;
 
 import com.wander.ReservationStatus;
+import com.wander.dto.ReservationResponse;
 import com.wander.models.ReservationEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -41,5 +44,26 @@ public interface ReservationRepo extends JpaRepository<ReservationEntity, Long> 
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
             @Param("cancelledStatus") ReservationStatus cancelledStatus
+    );
+
+    @Query("""
+        SELECT r FROM ReservationEntity r
+        WHERE r.startDate >= :startDate AND r.endDate <= :endDate
+    """)
+    List<ReservationEntity> findByDateRange(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    @Query("""
+        SELECT r FROM ReservationEntity r
+        WHERE r.userId = :userId
+        AND r.status = :status
+        AND :today BETWEEN r.startDate AND r.endDate
+    """)
+    List<ReservationEntity> findActiveReservations(
+            @Param("userId") Long userId,
+            @Param("today") LocalDate today,
+            @Param("status") ReservationStatus status
     );
 }
