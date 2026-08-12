@@ -32,9 +32,18 @@ public class ReservationEntity {
     @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     ReservationStatus status;
 
     @Version
     private Integer version;
+
+    public ReservationEntity(Long userId, Long roomId, LocalDate startDate, LocalDate endDate, ReservationStatus status) {
+        this.userId = userId;
+        this.roomId = roomId;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.status = status;
+    }
 }
